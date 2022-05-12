@@ -258,30 +258,6 @@ impl<P: Parameters> Distribution<GroupAffine<P>> for Standard {
     }
 }
 
-mod group_impl {
-    use super::*;
-    use crate::group::Group;
-
-    impl<P: Parameters> Group for GroupAffine<P> {
-        type ScalarField = P::ScalarField;
-
-        #[inline]
-        fn double(&self) -> Self {
-            let mut tmp = *self;
-            tmp += self;
-            tmp
-        }
-
-        #[inline]
-        fn double_in_place(&mut self) -> &mut Self {
-            let mut tmp = *self;
-            tmp += &*self;
-            *self = tmp;
-            self
-        }
-    }
-}
-
 //////////////////////////////////////////////////////////////////////////////
 
 /// `GroupProjective` implements Extended Twisted Edwards Coordinates
