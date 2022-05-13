@@ -148,11 +148,16 @@ pub trait Field:
     fn sum_of_products(a: &[Self], b: &[Self]) -> Self {
         #[cfg(not(feature = "parallel"))]
         {
-            a.iter().zip(b).fold(Self::zero(), |acc, (a, b)| acc + *a * b)
+            a.iter()
+                .zip(b)
+                .fold(Self::zero(), |acc, (a, b)| acc + *a * b)
         }
         #[cfg(feature = "parallel")]
         {
-            cfg_iter!(a).zip(b).fold(|| Self::zero(), |acc, (a, b)| acc + *a * b).sum()
+            cfg_iter!(a)
+                .zip(b)
+                .fold(|| Self::zero(), |acc, (a, b)| acc + *a * b)
+                .sum()
         }
     }
 
