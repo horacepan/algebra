@@ -245,7 +245,7 @@ pub trait VariableBaseMSM:
                 }
 
                 let mut running_sum = Self::zero();
-                let mut res = Self::zero;
+                let mut res = Self::zero();
                 buckets.into_iter().rev().for_each(|b| {
                     running_sum += &b;
                     res += &running_sum;
@@ -298,4 +298,41 @@ pub trait VariableBaseMSM:
         }
         result
     }
+}
+
+#[test]
+fn test_var_base_msm() {
+    use ark_ff::{One, PrimeField, UniformRand, Zero};
+    use ark_bls12_381::{Fr, G1Projective};
+    //use ark_test_curves::bls12_381::{Fr, G1Projective};
+    use crate::{AffineCurve, ProjectiveCurve};
+    fn naive_var_base_msm<G: AffineCurve>(
+        bases: &[G],
+        scalars: &[<G::ScalarField as PrimeField>::BigInt],
+    ) -> G::Projective {
+        let mut acc = G::Projective::zero();
+
+        for (base, scalar) in bases.iter().zip(scalars.iter()) {
+            acc += &base.mul(*scalar);
+        }
+        acc
+    }
+
+    const SAMPLES: usize = 10; // change later
+    let mut rng = ark_std::test_rng();
+
+    let mut v = (0..SAMPLES)
+        .map(|_| Fr::rand(&mut rng).into_bigint())
+        .collect::<Vec<_>>();
+    v.push(Fr::one().into_bigint());
+    let g = (0..SAMPLES + 1)
+        .map(|_| G1Projective::rand(&mut rng))
+        .collect::<Vec<_>>();
+
+    let g = <G1Projective as ProjectiveCurve>::batch_normalization_into_affine(&g);
+    let naive = naive_var_base_msm(g.as_slice(), v.as_slice());
+    let fast = <G1Projective as VariableBaseMSM>::msm_bigint(g.as_slice(), v.as_slice());
+    let wnaf = <G1Projective as VariableBaseMSM>::msm_bigint_wnaf(g.as_slice(), v.as_slice());
+    assert_eq!(naive.into_affine(), fast.into_affine());
+    assert_eq!(fast.into_affine(), wnaf.into_affine());
 }
